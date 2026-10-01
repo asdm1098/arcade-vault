@@ -11,7 +11,7 @@ import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Arcade Vault",
+  title: { default: "Arcade Vault", template: "%s · Arcade Vault" },
   description: "Compite por el puntaje más alto en la plataforma de juegos online.",
 };
 
