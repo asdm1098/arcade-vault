@@ -89,7 +89,7 @@ Convenciones:
 
 ## Plan de implementación
 
-1. Crear `lib/types.ts` y `lib/data.ts`. Verificar con `pnpm lint` y `pnpm build`.
+1. Crear `lib/types.ts` y `lib/data.ts`. Agregar `references/**` a `globalIgnores` en `eslint.config.mjs` (los `.jsx` del prototipo usan `React` global y rompen `pnpm lint`). Verificar con `pnpm lint` y `pnpm build`.
 2. Crear `components/session-provider.tsx` (`"use client"`): Context con `user`, `login(user | null)`, `signOut()`. Lee `av_user` en `useEffect`, no durante el render. Envolver `children` en `app/layout.tsx`.
 3. Crear `components/nav.tsx` (`"use client"`) con links, créditos, botón sesión y panel móvil. Crear `components/footer.tsx`. Montar ambos en `app/layout.tsx` alrededor de `<main className="av-main">`. Verificar que se ven en `/`.
 4. Biblioteca: `app/page.tsx` (server) con hero; `components/library-grid.tsx` (`"use client"`, búsqueda + chips + estado vacío); `components/game-card.tsx` (`"use client"`, tilt). Navegación con `next/link` a `/juegos/[id]`.
