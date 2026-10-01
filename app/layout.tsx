@@ -7,6 +7,8 @@ import "@fontsource/courier-prime/400.css";
 import "@fontsource/courier-prime/700.css";
 import "./globals.css";
 import { SessionProvider } from "@/components/session-provider";
+import { Nav } from "@/components/nav";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "Arcade Vault",
@@ -20,7 +22,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="av-bg" aria-hidden="true" />
         <div className="av-noise" aria-hidden="true" />
         <SessionProvider>
-          <div id="root">{children}</div>
+          <div id="root">
+            <Nav />
+            <main className="av-main">{children}</main>
+            <Footer />
+          </div>
         </SessionProvider>
       </body>
     </html>
