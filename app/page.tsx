@@ -1,12 +1,15 @@
+import { LibraryGrid } from "@/components/library-grid";
+
 export default function Home() {
   return (
-    <main className="av-main">
+    <div className="fade-in">
       <section className="av-hero">
-        <h1 className="flicker">Arcade Vault</h1>
-        <p className="sub">
-          Insert coin <span className="blink">_</span>
-        </p>
+        <h1 className="flicker">ARCADE VAULT</h1>
+        <div className="sub">
+          INSERTA UNA MONEDA PARA JUGAR <span className="blink">_</span>
+        </div>
       </section>
-    </main>
+      <LibraryGrid />
+    </div>
   );
 }
