@@ -18,8 +18,12 @@ Package manager: pnpm.
 
 No test runner configured.
 
+## Skills
+Usa siempre /frontend-design para diseñar la interfaz de usuario.
+
 ## Stack
 
 Next.js 16.3.7 (App Router, `app/` at repo root, no `src/`), React 19, TypeScript, Tailwind CSS v4 (via `@tailwindcss/postcss`, styles in `app/globals.css`). Path alias `@/*` → repo root.
 
 Next version has breaking changes vs. training data (see AGENTS.md). Note: `node_modules/next/dist/docs/` does not exist in the installed package — verify APIs against installed `next` source/types instead.
+
