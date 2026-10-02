@@ -21,6 +21,9 @@ No test runner configured.
 ## Skills
 Usa siempre /frontend-design para diseñar la interfaz de usuario.
 
+## Playwright
+Graba todos los screenshots de Playwright en `.playwright-screenshots/` (usar `filename: ".playwright-screenshots/<nombre>.png"`).
+
 ## Stack
 
 Next.js 16.3.7 (App Router, `app/` at repo root, no `src/`), React 19, TypeScript, Tailwind CSS v4 (via `@tailwindcss/postcss`, styles in `app/globals.css`). Path alias `@/*` → repo root.

@@ -6,9 +6,12 @@ import "@fontsource/jetbrains-mono/700.css";
 import "@fontsource/courier-prime/400.css";
 import "@fontsource/courier-prime/700.css";
 import "./globals.css";
+import { SessionProvider } from "@/components/session-provider";
+import { Nav } from "@/components/nav";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Arcade Vault",
+  title: { default: "Arcade Vault", template: "%s · Arcade Vault" },
   description: "Compite por el puntaje más alto en la plataforma de juegos online.",
 };
 
@@ -18,7 +21,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <div className="av-bg" aria-hidden="true" />
         <div className="av-noise" aria-hidden="true" />
-        <div id="root">{children}</div>
+        <SessionProvider>
+          <div id="root">
+            <Nav />
+            <main className="av-main">{children}</main>
+            <Footer />
+          </div>
+        </SessionProvider>
       </body>
     </html>
   );
