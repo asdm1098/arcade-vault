@@ -30,3 +30,35 @@ export interface SavedScore {
   name: string;
   at: number; // Date.now()
 }
+
+export interface ActivityRow {
+  player: string; // p. ej. "NEONFOX"
+  game: string; // título visible, p. ej. "Caída"
+  score: number;
+  ago: string; // ya formateado, p. ej. "hace 2 min"
+  color: GameColor;
+}
+
+export interface TopPlayer {
+  rank: number;
+  player: string;
+  score: number;
+}
+
+export interface Feature {
+  icon: "GAMEPAD" | "FREE" | "TROPHY" | "ROCKET";
+  title: string;
+  desc: string;
+  color: GameColor;
+}
+
+export interface HomeStat {
+  n: string; // "12+", "MILES", "GLOBAL"
+  unit: string;
+  sub: string;
+}
+
+export interface FaqItem {
+  q: string;
+  a: string;
+}
