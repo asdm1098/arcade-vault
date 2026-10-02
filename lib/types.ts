@@ -62,3 +62,13 @@ export interface FaqItem {
   q: string;
   a: string;
 }
+
+export interface ContactInput {
+  name: string;
+  email: string;
+  msg: string;
+}
+
+export type ContactResult =
+  | { ok: true }
+  | { ok: false; error: "invalid" | "send_failed" };
