@@ -18,7 +18,7 @@ export default function NotFound() {
         ESTA RUTA NO EXISTE EN EL VAULT.
       </p>
       <div style={{ marginTop: 28 }}>
-        <Link href="/" className="btn lg">
+        <Link href="/games" className="btn lg">
           VOLVER AL VAULT
         </Link>
       </div>

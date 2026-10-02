@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import { LibraryGrid } from "@/components/library-grid";
+
+export const metadata: Metadata = { title: "Biblioteca" };
+
+export default function GamesPage() {
+  return (
+    <div className="fade-in">
+      <section className="av-hero">
+        <h1 className="flicker">ARCADE VAULT</h1>
+        <div className="sub">
+          INSERTA UNA MONEDA PARA JUGAR <span className="blink">_</span>
+        </div>
+      </section>
+      <LibraryGrid />
+    </div>
+  );
+}
