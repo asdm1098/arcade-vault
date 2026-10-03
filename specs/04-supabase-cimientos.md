@@ -1,6 +1,6 @@
 # SPEC 04 — Cimientos de Supabase en Next.js
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 03
 > **Date:** 2026-10-03
 > **Objective:** Dejar Supabase integrado en la app (SDK, clientes de servidor y navegador, variables de entorno y health check) sin cambiar ninguna pantalla ni crear tablas.
