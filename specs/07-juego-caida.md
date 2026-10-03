@@ -1,6 +1,6 @@
 # SPEC 07 — Juego Caída (Tetris) jugable en el player
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 05, SPEC 06
 > **Date:** 2026-10-03
 > **Objective:** Portar `references/started-games/03-tetris` a un motor TypeScript con canvas y conectarlo a `/juegos/caida/jugar` con su leaderboard.
