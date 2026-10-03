@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import Link from "next/link";
 import { GAMES } from "@/lib/data";
 import { useSession } from "@/components/session-provider";
+import { GAME_COMPONENTS } from "@/lib/games/registry";
+import type { GameStats } from "@/lib/games/types";
 import type { SavedScore } from "@/lib/types";
 
 const SCORES_KEY = "av_scores";
@@ -43,8 +45,13 @@ function saveScore(entry: Omit<SavedScore, "at">) {
 export function GamePlayer({ id }: { id: string }) {
   const { user } = useSession();
   const game = GAMES.find((g) => g.id === id) ?? GAMES[0];
-  const [{ score, lives, level }, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const Game = GAME_COMPONENTS[game.id];
+  const [mockStats, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const [engineStats, setEngineStats] = useState<GameStats>(INITIAL_STATE);
+  const { score, lives, level } = Game ? engineStats : mockStats;
   const [paused, setPaused] = useState(false);
+  const [restartKey, setRestartKey] = useState(0);
+  const [endSignal, setEndSignal] = useState(0);
   const [over, setOver] = useState(false);
   const [saved, setSaved] = useState(false);
   // null until the player edits it; falls back to the session name.
@@ -52,17 +59,23 @@ export function GamePlayer({ id }: { id: string }) {
   const name = editedName ?? user?.name ?? "INVITADO";
 
   useEffect(() => {
-    if (over || paused) return;
+    if (Game || over || paused) return;
     const t = setInterval(
       () =>
         dispatch({ type: "tick", points: Math.floor(10 + Math.random() * 90) }),
       220,
     );
     return () => clearInterval(t);
-  }, [over, paused]);
+  }, [Game, over, paused]);
+
+  const handleGameOver = useCallback(() => {
+    setPaused(false);
+    setOver(true);
+  }, []);
 
   const restart = () => {
     dispatch({ type: "reset" });
+    setRestartKey((k) => k + 1);
     setPaused(false);
     setOver(false);
     setSaved(false);
@@ -95,7 +108,10 @@ export function GamePlayer({ id }: { id: string }) {
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
-          <button className="btn magenta" onClick={() => setOver(true)}>
+          <button
+            className="btn magenta"
+            onClick={() => (Game ? setEndSignal((n) => n + 1) : setOver(true))}
+          >
             FIN
           </button>
           <Link href={`/juegos/${game.id}`} className="btn ghost">
@@ -106,13 +122,23 @@ export function GamePlayer({ id }: { id: string }) {
 
       <div className="crt">
         <div className="crt-screen">
-          <div className="game-arena">
-            <div className="grid-floor"></div>
-            <div className="enemy e1"></div>
-            <div className="enemy e2"></div>
-            <div className="enemy e3"></div>
-            <div className="player-ship"></div>
-          </div>
+          {Game ? (
+            <Game
+              paused={paused}
+              restartKey={restartKey}
+              endSignal={endSignal}
+              onStats={setEngineStats}
+              onGameOver={handleGameOver}
+            />
+          ) : (
+            <div className="game-arena">
+              <div className="grid-floor"></div>
+              <div className="enemy e1"></div>
+              <div className="enemy e2"></div>
+              <div className="enemy e3"></div>
+              <div className="player-ship"></div>
+            </div>
+          )}
           {paused && (
             <div
               className="crt-content"
