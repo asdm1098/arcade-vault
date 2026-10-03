@@ -4,15 +4,8 @@ import { FeatureIcon } from "@/components/home/feature-icon";
 import { FloatingSilhouettes } from "@/components/home/floating-silhouettes";
 import { MiniCard } from "@/components/home/mini-card";
 import { Reveal } from "@/components/home/reveal";
-import {
-  ACTIVITY,
-  FAQ,
-  FEATURES,
-  GAMES,
-  HOME_STATS,
-  PRICING_FEATURES,
-  TOP_PLAYERS,
-} from "@/lib/data";
+import { FAQ, FEATURES, HOME_STATS, PRICING_FEATURES } from "@/lib/data";
+import { getGames, getRecentActivity, getTopPlayers } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: { absolute: "Arcade Vault · Inicio" },
@@ -20,7 +13,27 @@ export const metadata: Metadata = {
 
 const TOP_CLASS = ["top1", "top2", "top3"];
 
-export default function Home() {
+function EmptyState({ children }: { children: string }) {
+  return (
+    <div
+      style={{
+        padding: "32px 16px",
+        textAlign: "center",
+        color: "var(--ink-faint)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export default async function Home() {
+  const [games, activity, topPlayers] = await Promise.all([
+    getGames(),
+    getRecentActivity(7),
+    getTopPlayers(5),
+  ]);
+
   return (
     <div className="home fade-in">
       {/* HERO */}
@@ -85,7 +98,12 @@ export default function Home() {
           <div className="section-rule"></div>
         </div>
         <div className="mini-rail">
-          {GAMES.slice(0, 6).map((g) => (
+          {games.length === 0 && (
+            <EmptyState>
+              NO PUDIMOS CARGAR LOS JUEGOS. INTENTA DE NUEVO EN UNOS SEGUNDOS.
+            </EmptyState>
+          )}
+          {games.slice(0, 6).map((g) => (
             <MiniCard key={g.id} game={g} />
           ))}
         </div>
@@ -126,9 +144,12 @@ export default function Home() {
               <div className="ac-title pixel">▸ ÚLTIMAS PUNTUACIONES</div>
             </div>
             <div className="ticker">
-              {ACTIVITY.map((r, i) => (
+              {activity.length === 0 && (
+                <EmptyState>AÚN NO HAY PUNTUACIONES.</EmptyState>
+              )}
+              {activity.map((r, i) => (
                 <div
-                  key={r.player}
+                  key={i}
                   className="tick-row"
                   style={{ animationDelay: i * 60 + "ms" }}
                 >
@@ -149,7 +170,10 @@ export default function Home() {
               </Link>
             </div>
             <div className="top-list">
-              {TOP_PLAYERS.map((r, i) => (
+              {topPlayers.length === 0 && (
+                <EmptyState>AÚN NO HAY JUGADORES EN EL RANKING.</EmptyState>
+              )}
+              {topPlayers.map((r, i) => (
                 <div
                   key={r.player}
                   className={"top-row" + (TOP_CLASS[i] ? " " + TOP_CLASS[i] : "")}
