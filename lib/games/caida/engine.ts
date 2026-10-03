@@ -76,6 +76,7 @@ export const PIECES: (Matrix | null)[] = [
   ], // N (tuerca)
 ];
 
+const GRID_COLOR = "rgba(255,255,255,0.08)";
 export const LINE_SCORES = [0, 100, 300, 500, 800];
 const KICKS = [0, -1, 1, -2, 2];
 const GAME_KEYS = [
@@ -301,11 +302,90 @@ export function createCaida(
     emitStats();
   }
 
-  // Se implementa en el paso 2 (dibujo).
+  // ── Dibujo ──────────────────────────────────────────────────────────────────
+  function drawBlock(
+    gx: number,
+    gy: number,
+    colorIndex: number,
+    size: number,
+    ox: number,
+    alpha = 1,
+  ): void {
+    if (!ctx || !colorIndex) return;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = COLORS[colorIndex] as string;
+    ctx.fillRect(ox + gx * size + 1, gy * size + 1, size - 2, size - 2);
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.fillRect(ox + gx * size + 1, gy * size + 1, size - 2, 4);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawGrid(): void {
+    if (!ctx) return;
+    ctx.strokeStyle = GRID_COLOR;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let c = 1; c < COLS; c++) {
+      ctx.moveTo(c * BLOCK, 0);
+      ctx.lineTo(c * BLOCK, BOARD_H);
+    }
+    for (let r = 1; r < ROWS; r++) {
+      ctx.moveTo(0, r * BLOCK);
+      ctx.lineTo(BOARD_W, r * BLOCK);
+    }
+    ctx.stroke();
+  }
+
+  function drawPiece(piece: Piece, y: number, alpha = 1): void {
+    for (let r = 0; r < piece.shape.length; r++)
+      for (let c = 0; c < piece.shape[r].length; c++)
+        drawBlock(piece.x + c, y + r, piece.shape[r][c], BLOCK, 0, alpha);
+  }
+
+  function drawPanel(): void {
+    if (!ctx) return;
+    ctx.strokeStyle = GRID_COLOR;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(BOARD_W + 0.5, 0);
+    ctx.lineTo(BOARD_W + 0.5, BOARD_H);
+    ctx.stroke();
+
+    ctx.font = "bold 14px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#9e9e9e";
+    ctx.fillText("NEXT", BOARD_W + 15, 32);
+
+    // Caja 4×4 de 30 px (120 px) centrada en el panel
+    const boxX = BOARD_W + (PANEL_W - 4 * BLOCK) / 2;
+    const shape = next.shape;
+    const offX = Math.floor((4 - shape[0].length) / 2);
+    const offY = Math.floor((4 - shape.length) / 2);
+    for (let r = 0; r < shape.length; r++)
+      for (let c = 0; c < shape[r].length; c++)
+        drawBlock(offX + c, 1.5 + offY + r, shape[r][c], BLOCK, boxX);
+
+    ctx.fillStyle = "#9e9e9e";
+    ctx.fillText("LINES", BOARD_W + 15, 250);
+    ctx.font = "bold 28px monospace";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(String(lines), BOARD_W + 15, 286);
+  }
+
   function draw(): void {
     if (!ctx) return;
-    // TODO(paso 2): tablero, fantasma, pieza actual y panel lateral.
-    void lines;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+    drawGrid();
+
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        drawBlock(c, r, board[r][c], BLOCK, 0);
+
+    drawPiece(current, ghostY(), 0.2);
+    drawPiece(current, current.y);
+    drawPanel();
   }
 
   // ── Loop principal ──────────────────────────────────────────────────────────
