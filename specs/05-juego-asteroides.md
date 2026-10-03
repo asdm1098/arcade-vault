@@ -1,6 +1,6 @@
 # SPEC 05 — Juego Asteroides jugable en el player
 
-> **Status:** Borrador
+> **Status:** Aprobado
 > **Depends on:** SPEC 01
 > **Date:** 2026-10-03
 > **Objective:** Portar el juego `references/started-games/02-asteroids` a un motor TypeScript con canvas y conectarlo al player de `/juegos/rocas/jugar`, reemplazando la arena mock solo para ese juego.
