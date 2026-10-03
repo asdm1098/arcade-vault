@@ -3,9 +3,11 @@ import {
   AsteroidsCanvas,
   type GameCanvasProps,
 } from "@/components/games/asteroids-canvas";
+import { CaidaCanvas } from "@/components/games/caida-canvas";
 
 // id del juego (lib/data.ts) → componente de juego con motor real.
 // Los juegos sin entrada siguen usando la arena mock de GamePlayer.
 export const GAME_COMPONENTS: Record<string, ComponentType<GameCanvasProps>> = {
   rocas: AsteroidsCanvas,
+  caida: CaidaCanvas,
 };
