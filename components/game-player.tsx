@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useReducer, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 import { GAME_COMPONENTS } from "@/lib/games/registry";
 import type { GameStats } from "@/lib/games/types";
-import type { Game, SavedScore } from "@/lib/types";
+import type { Game } from "@/lib/types";
 
-const SCORES_KEY = "av_scores";
 const INITIAL_LIVES = 3;
 
 interface PlayState {
@@ -36,17 +36,11 @@ function reducer(state: PlayState, action: PlayAction): PlayState {
   }
 }
 
-function saveScore(entry: Omit<SavedScore, "at">) {
-  try {
-    const raw = localStorage.getItem(SCORES_KEY);
-    const all: SavedScore[] = raw ? JSON.parse(raw) : [];
-    all.push({ ...entry, at: Date.now() });
-    localStorage.setItem(SCORES_KEY, JSON.stringify(all));
-  } catch {}
-}
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export function GamePlayer({ game }: { game: Game }) {
   const { user } = useSession();
+  const router = useRouter();
   const Game = GAME_COMPONENTS[game.id];
   const [mockStats, dispatch] = useReducer(reducer, INITIAL_STATE);
   const [engineStats, setEngineStats] = useState<GameStats>(INITIAL_STATE);
@@ -55,7 +49,7 @@ export function GamePlayer({ game }: { game: Game }) {
   const [restartKey, setRestartKey] = useState(0);
   const [endSignal, setEndSignal] = useState(0);
   const [over, setOver] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   // null until the player edits it; falls back to the session name.
   const [editedName, setEditedName] = useState<string | null>(null);
   const name = editedName ?? user?.name ?? "INVITADO";
@@ -75,12 +69,28 @@ export function GamePlayer({ game }: { game: Game }) {
     setOver(true);
   }, []);
 
+  const save = async () => {
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game: game.id, score, name }),
+      });
+      if (!res.ok) throw new Error("save_failed");
+      setSaveStatus("saved");
+      router.refresh();
+    } catch {
+      setSaveStatus("error");
+    }
+  };
+
   const restart = () => {
     dispatch({ type: "reset" });
     setRestartKey((k) => k + 1);
     setPaused(false);
     setOver(false);
-    setSaved(false);
+    setSaveStatus("idle");
   };
 
   return (
@@ -178,25 +188,39 @@ export function GamePlayer({ game }: { game: Game }) {
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
-              <div className="input-row">
-                <input
-                  value={name}
-                  onChange={(e) =>
-                    setEditedName(e.target.value.toUpperCase().slice(0, 10))
-                  }
-                  placeholder="TUS INICIALES"
-                />
-                <button
-                  className="btn yellow"
-                  onClick={() => {
-                    saveScore({ game: game.id, score, name });
-                    setSaved(true);
-                  }}
-                >
-                  GUARDAR PUNTUACIÓN
-                </button>
-              </div>
+            {saveStatus !== "saved" ? (
+              <>
+                <div className="input-row">
+                  <input
+                    value={name}
+                    disabled={saveStatus === "saving"}
+                    onChange={(e) =>
+                      setEditedName(e.target.value.toUpperCase().slice(0, 10))
+                    }
+                    placeholder="TUS INICIALES"
+                  />
+                  <button
+                    className="btn yellow"
+                    disabled={saveStatus === "saving" || name.trim() === ""}
+                    onClick={save}
+                  >
+                    {saveStatus === "saving"
+                      ? "GUARDANDO…"
+                      : saveStatus === "error"
+                        ? "REINTENTAR"
+                        : "GUARDAR PUNTUACIÓN"}
+                  </button>
+                </div>
+                {saveStatus === "error" && (
+                  <div
+                    role="alert"
+                    className="pixel"
+                    style={{ fontSize: 10, color: "var(--magenta)", marginTop: 10 }}
+                  >
+                    ▸ NO SE PUDO GUARDAR. REINTENTA.
+                  </div>
+                )}
+              </>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
             )}

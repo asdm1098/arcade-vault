@@ -24,13 +24,6 @@ export interface SessionUser {
   name: string; // mayúsculas, máx. 10 caracteres
 }
 
-export interface SavedScore {
-  game: string; // Game.id
-  score: number;
-  name: string;
-  at: number; // Date.now()
-}
-
 export interface ActivityRow {
   player: string; // p. ej. "NEONFOX"
   game: string; // título visible, p. ej. "Caída"
