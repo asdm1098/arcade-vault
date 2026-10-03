@@ -1,0 +1,6 @@
+.next
+node_modules
+references
+pnpm-lock.yaml
+.playwright-*
+next-env.d.ts
