@@ -1,6 +1,6 @@
 # SPEC 03 — Página "Acerca de" con formulario de contacto (Resend)
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01, SPEC 02
 > **Date:** 2026-10-02
 > **Objective:** Agregar la página `/acerca-de` (misión + formulario de contacto) tal cual `references/templates/home-about/about.jsx`, con su link en el navbar y envío real del mensaje por correo usando Resend.

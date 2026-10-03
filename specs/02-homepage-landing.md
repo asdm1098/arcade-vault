@@ -1,6 +1,6 @@
 # SPEC 02 — Homepage (landing) de Arcade Vault
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01
 > **Date:** 2026-10-02
 > **Objective:** Convertir `/` en la landing del prototipo `references/templates/home-about` (hero, beneficios, juegos, stats, actividad, precios, CTA final) y mover la biblioteca actual a `/games`.
