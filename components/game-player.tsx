@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useReducer, useState } from "react";
 import Link from "next/link";
-import { GAMES } from "@/lib/data";
 import { useSession } from "@/components/session-provider";
 import { GAME_COMPONENTS } from "@/lib/games/registry";
 import type { GameStats } from "@/lib/games/types";
-import type { SavedScore } from "@/lib/types";
+import type { Game, SavedScore } from "@/lib/types";
 
 const SCORES_KEY = "av_scores";
 const INITIAL_LIVES = 3;
@@ -26,7 +25,11 @@ function reducer(state: PlayState, action: PlayAction): PlayState {
     case "tick": {
       const score = state.score + action.points;
       const levelUp = score > 0 && score % 2500 < 100;
-      return { ...state, score, level: levelUp ? state.level + 1 : state.level };
+      return {
+        ...state,
+        score,
+        level: levelUp ? state.level + 1 : state.level,
+      };
     }
     case "reset":
       return INITIAL_STATE;
@@ -42,9 +45,8 @@ function saveScore(entry: Omit<SavedScore, "at">) {
   } catch {}
 }
 
-export function GamePlayer({ id }: { id: string }) {
+export function GamePlayer({ game }: { game: Game }) {
   const { user } = useSession();
-  const game = GAMES.find((g) => g.id === id) ?? GAMES[0];
   const Game = GAME_COMPONENTS[game.id];
   const [mockStats, dispatch] = useReducer(reducer, INITIAL_STATE);
   const [engineStats, setEngineStats] = useState<GameStats>(INITIAL_STATE);
