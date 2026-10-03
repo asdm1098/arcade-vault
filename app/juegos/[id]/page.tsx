@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { GAMES, seededScores } from "@/lib/data";
+import { getGame, getTopScores } from "@/lib/queries";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/juegos/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGame(id);
   return game ? { title: game.title, description: game.short } : {};
 }
 
@@ -15,10 +15,8 @@ export default async function GameDetailPage({
   params,
 }: PageProps<"/juegos/[id]">) {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const [game, scores] = await Promise.all([getGame(id), getTopScores(id, 10)]);
   if (!game) notFound();
-
-  const scores = seededScores(id.length * 17 + 3, 10);
 
   return (
     <div className="av-detail fade-in">
@@ -79,6 +77,17 @@ export default async function GameDetailPage({
       <aside>
         <div className="leaderboard">
           <h3>MEJORES PUNTUACIONES</h3>
+          {scores.length === 0 && (
+            <div
+              style={{
+                padding: "32px 16px",
+                textAlign: "center",
+                color: "var(--ink-faint)",
+              }}
+            >
+              AÚN NO HAY PUNTUACIONES. ¡SÉ EL PRIMERO!
+            </div>
+          )}
           {scores.map((r, i) => (
             <div
               key={r.rank}

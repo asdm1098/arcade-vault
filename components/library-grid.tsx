@@ -1,21 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CATS, GAMES } from "@/lib/data";
+import { CATS } from "@/lib/data";
 import { GameCard } from "@/components/game-card";
+import type { Game } from "@/lib/types";
 
-export function LibraryGrid() {
+export function LibraryGrid({ games }: { games: Game[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<(typeof CATS)[number]>("TODOS");
 
   const filtered = useMemo(
     () =>
-      GAMES.filter(
+      games.filter(
         (g) =>
           (cat === "TODOS" || g.cat === cat) &&
           g.title.toLowerCase().includes(q.toLowerCase()),
       ),
-    [q, cat],
+    [games, q, cat],
   );
 
   return (
@@ -57,11 +58,21 @@ export function LibraryGrid() {
           >
             <div
               className="pixel"
-              style={{ fontSize: 14, color: "var(--magenta)", marginBottom: 12 }}
+              style={{
+                fontSize: 14,
+                color: "var(--magenta)",
+                marginBottom: 12,
+              }}
             >
-              NO HAY RESULTADOS
+              {games.length === 0
+                ? "CATÁLOGO NO DISPONIBLE"
+                : "NO HAY RESULTADOS"}
             </div>
-            <div>Intenta otra búsqueda o categoría.</div>
+            <div>
+              {games.length === 0
+                ? "No pudimos cargar los juegos. Intenta de nuevo en unos segundos."
+                : "Intenta otra búsqueda o categoría."}
+            </div>
           </div>
         )}
       </div>
