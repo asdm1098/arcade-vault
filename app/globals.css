@@ -1082,6 +1082,16 @@ a {
   );
   pointer-events: none;
 }
+/* Juegos 3:4 (Caída): .crt-screen fuerza 4:3, así que se libera solo si lo contiene. */
+.crt-screen:has(> .caida-canvas) {
+  aspect-ratio: auto;
+  display: flex;
+  justify-content: center;
+}
+.caida-canvas {
+  width: min(100%, calc(72vh * 0.75));
+  height: auto;
+}
 .crt-content {
   position: absolute;
   inset: 0;
