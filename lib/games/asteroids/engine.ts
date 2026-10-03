@@ -1,3 +1,5 @@
+import type { GameCallbacks, GameHandle, GameStats } from "../types";
+
 // ── Constantes ────────────────────────────────────────────────────────────────
 export const W = 800;
 export const H = 600;
@@ -313,4 +315,317 @@ export class Particle {
     ctx.lineTo(this.x - this.vx * 0.05, this.y - this.vy * 0.05);
     ctx.stroke();
   }
+}
+
+// ── Motor ─────────────────────────────────────────────────────────────────────
+type EngineState = "playing" | "dead" | "gameover";
+
+const GAME_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "Space"];
+
+export function createAsteroids(
+  canvas: HTMLCanvasElement,
+  callbacks: GameCallbacks,
+): GameHandle {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D no disponible");
+
+  // ── Input ───────────────────────────────────────────────────────────────────
+  const keys: Keys = {};
+  const justPressed: Keys = {};
+
+  function clearInput(): void {
+    for (const k of Object.keys(keys)) keys[k] = false;
+    for (const k of Object.keys(justPressed)) justPressed[k] = false;
+  }
+
+  function pressed(code: string): boolean {
+    const val = !!justPressed[code];
+    justPressed[code] = false;
+    return val;
+  }
+
+  // ── Estado del juego ────────────────────────────────────────────────────────
+  let ship = new Ship();
+  let bullets: Bullet[] = [];
+  let asteroids: Asteroid[] = [];
+  let particles: Particle[] = [];
+  let powerUps: PowerUp[] = [];
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let state: EngineState = "playing";
+  let deadTimer = 0;
+  let powerUpSpawned = false;
+  let killsSinceSpawn = 0;
+
+  let paused = false;
+  let destroyed = false;
+  let gameOverSent = false;
+  let rafId: number | null = null;
+  let lastTime: number | null = null;
+  let lastStats: GameStats | null = null;
+
+  function isActive(): boolean {
+    return !destroyed && !paused && state !== "gameover";
+  }
+
+  function emitStats(): void {
+    if (
+      lastStats &&
+      lastStats.score === score &&
+      lastStats.lives === lives &&
+      lastStats.level === level
+    )
+      return;
+    lastStats = { score, lives, level };
+    callbacks.onStats({ ...lastStats });
+  }
+
+  function handleKeyDown(e: KeyboardEvent): void {
+    if (!GAME_KEYS.includes(e.code)) return;
+    if (!isActive()) return;
+    e.preventDefault();
+    if (!keys[e.code]) justPressed[e.code] = true;
+    keys[e.code] = true;
+  }
+
+  function handleKeyUp(e: KeyboardEvent): void {
+    if (!GAME_KEYS.includes(e.code)) return;
+    if (isActive()) e.preventDefault();
+    keys[e.code] = false;
+  }
+
+  function spawnAsteroids(count: number): void {
+    const SAFE_DIST = 130;
+    for (let i = 0; i < count; i++) {
+      let x: number;
+      let y: number;
+      do {
+        x = rand(0, W);
+        y = rand(0, H);
+      } while (Math.hypot(x - W / 2, y - H / 2) < SAFE_DIST);
+      asteroids.push(new Asteroid(x, y, 3));
+    }
+  }
+
+  function initGame(): void {
+    ship = new Ship();
+    bullets = [];
+    asteroids = [];
+    particles = [];
+    powerUps = [];
+    powerUpSpawned = false;
+    killsSinceSpawn = 0;
+    score = 0;
+    lives = 3;
+    level = 1;
+    state = "playing";
+    gameOverSent = false;
+    spawnAsteroids(4);
+    emitStats();
+  }
+
+  function nextLevel(): void {
+    level++;
+    bullets = [];
+    particles = [];
+    powerUps = [];
+    powerUpSpawned = false;
+    killsSinceSpawn = 0;
+    ship.reset();
+    spawnAsteroids(3 + level);
+  }
+
+  function explode(x: number, y: number, count = 8): void {
+    for (let i = 0; i < count; i++) particles.push(new Particle(x, y));
+  }
+
+  function sendGameOver(): void {
+    if (gameOverSent) return;
+    gameOverSent = true;
+    callbacks.onGameOver(score);
+  }
+
+  function killShip(): void {
+    explode(ship.x, ship.y, 14);
+    ship.dead = true;
+    lives--;
+    if (lives <= 0) {
+      state = "gameover";
+    } else {
+      state = "dead";
+      deadTimer = 2;
+    }
+  }
+
+  // ── Update ──────────────────────────────────────────────────────────────────
+  function update(dt: number): void {
+    if (state === "gameover") return;
+
+    if (state === "dead") {
+      deadTimer -= dt;
+      particles.forEach((p) => p.update(dt));
+      particles = particles.filter((p) => !p.dead);
+      asteroids.forEach((a) => a.update(dt));
+      if (deadTimer <= 0) {
+        state = "playing";
+        ship.reset();
+      }
+      return;
+    }
+
+    // Disparar
+    if (pressed("Space")) {
+      bullets.push(...ship.tryShoot());
+    }
+
+    ship.update(dt, keys);
+    bullets.forEach((b) => b.update(dt));
+    asteroids.forEach((a) => a.update(dt));
+    particles.forEach((p) => p.update(dt));
+    powerUps.forEach((p) => p.update(dt));
+
+    bullets = bullets.filter((b) => !b.dead);
+    particles = particles.filter((p) => !p.dead);
+    powerUps = powerUps.filter((p) => !p.dead);
+
+    for (const p of powerUps) {
+      if (!p.dead && dist(ship, p) < ship.radius + p.radius) {
+        p.dead = true;
+        ship.tripleShot = POWERUP_DURATION;
+      }
+    }
+
+    // Bala vs asteroide
+    const newAsteroids: Asteroid[] = [];
+    for (const b of bullets) {
+      for (const a of asteroids) {
+        if (!a.dead && !b.dead && dist(b, a) < a.radius) {
+          b.dead = true;
+          a.dead = true;
+          score += POINTS[a.size];
+          explode(a.x, a.y, a.size * 5);
+          newAsteroids.push(...a.split());
+          if (!powerUpSpawned) {
+            killsSinceSpawn++;
+            const guaranteed = killsSinceSpawn >= 5;
+            if (guaranteed || Math.random() < POWERUP_DROP_CHANCE) {
+              powerUps.push(new PowerUp(a.x, a.y));
+              powerUpSpawned = true;
+            }
+          }
+        }
+      }
+    }
+    asteroids = asteroids.filter((a) => !a.dead).concat(newAsteroids);
+    bullets = bullets.filter((b) => !b.dead);
+
+    // Nave vs asteroide
+    if (ship.invincible <= 0) {
+      for (const a of asteroids) {
+        if (dist(ship, a) < ship.radius + a.radius * 0.82) {
+          killShip();
+          break;
+        }
+      }
+    }
+
+    // Nivel completado
+    if (asteroids.length === 0) nextLevel();
+  }
+
+  // ── Draw ────────────────────────────────────────────────────────────────────
+  function draw(): void {
+    if (!ctx) return;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+
+    particles.forEach((p) => p.draw(ctx));
+    asteroids.forEach((a) => a.draw(ctx));
+    powerUps.forEach((p) => p.draw(ctx));
+    bullets.forEach((b) => b.draw(ctx));
+    ship.draw(ctx);
+
+    // Indicador del powerup (el HUD de score/nivel/vidas vive en React)
+    if (ship.tripleShot > 0) {
+      ctx.font = "15px monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#0ff";
+      ctx.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 26);
+    }
+  }
+
+  // ── Loop principal ──────────────────────────────────────────────────────────
+  function loop(ts: number): void {
+    rafId = null;
+    if (destroyed || paused) return;
+    const dt = lastTime === null ? 0 : Math.min((ts - lastTime) / 1000, 0.05);
+    lastTime = ts;
+    update(dt);
+    draw();
+    emitStats();
+    if (state === "gameover") {
+      sendGameOver();
+      return; // loop detenido: la escena queda congelada bajo el modal
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startLoop(): void {
+    if (rafId !== null || destroyed) return;
+    lastTime = null;
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function stopLoop(): void {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  // ── Handle ──────────────────────────────────────────────────────────────────
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
+
+  initGame();
+  draw();
+  startLoop();
+
+  return {
+    pause() {
+      if (destroyed || paused || state === "gameover") return;
+      paused = true;
+      stopLoop();
+      clearInput();
+    },
+    resume() {
+      if (destroyed || !paused) return;
+      paused = false;
+      if (state !== "gameover") startLoop(); // startLoop reinicia lastTime
+    },
+    restart() {
+      if (destroyed) return;
+      stopLoop();
+      clearInput();
+      paused = false;
+      initGame();
+      draw();
+      startLoop();
+    },
+    end() {
+      if (destroyed || state === "gameover") return;
+      stopLoop();
+      clearInput();
+      state = "gameover";
+      draw();
+      sendGameOver();
+    },
+    destroy() {
+      destroyed = true;
+      stopLoop();
+      clearInput();
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    },
+  };
 }
