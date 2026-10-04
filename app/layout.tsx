@@ -1,33 +1,30 @@
 import type { Metadata } from "next";
-import "@fontsource/press-start-2p/400.css";
-import "@fontsource/jetbrains-mono/400.css";
-import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/700.css";
-import "@fontsource/courier-prime/400.css";
-import "@fontsource/courier-prime/700.css";
 import "./globals.css";
-import { SessionProvider } from "@/components/session-provider";
-import { Nav } from "@/components/nav";
-import { Footer } from "@/components/footer";
+import { UserProvider } from "./context/UserContext";
+import Nav from "@/components/nav";
 
 export const metadata: Metadata = {
-  title: { default: "Arcade Vault", template: "%s · Arcade Vault" },
-  description: "Compite por el puntaje más alto en la plataforma de juegos online.",
+  title: "Arcade Vault",
+  description: "Online gaming platform — play and compete for points",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="es">
-      <body>
-        <div className="av-bg" aria-hidden="true" />
-        <div className="av-noise" aria-hidden="true" />
-        <SessionProvider>
-          <div id="root">
-            <Nav />
-            <main className="av-main">{children}</main>
-            <Footer />
-          </div>
-        </SessionProvider>
+    <html lang="en" className="h-full">
+      <body className="min-h-full flex flex-col">
+        <UserProvider>
+          <div className="av-bg" />
+          <div className="av-noise" />
+          <Nav />
+          <main className="av-main" style={{ position: 'relative', zIndex: 2 }}>{children}</main>
+          <footer style={{ borderTop: '1px solid var(--line)', padding: '20px 32px', textAlign: 'center', color: 'var(--ink-faint)', fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '0.16em' }}>
+            © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
+          </footer>
+        </UserProvider>
       </body>
     </html>
   );

@@ -1,11 +1,7 @@
-import type { Metadata } from "next";
-import { LibraryGrid } from "@/components/library-grid";
-import { getGames } from "@/lib/queries";
+import { LOCAL_GAMES } from '@/app/data/games';
+import GamesGrid from './GamesGrid';
 
-export const metadata: Metadata = { title: "Biblioteca" };
-
-export default async function GamesPage() {
-  const games = await getGames();
+export default async function Biblioteca() {
   return (
     <div className="fade-in">
       <section className="av-hero">
@@ -14,7 +10,7 @@ export default async function GamesPage() {
           INSERTA UNA MONEDA PARA JUGAR <span className="blink">_</span>
         </div>
       </section>
-      <LibraryGrid games={games} />
+      <GamesGrid games={LOCAL_GAMES} />
     </div>
   );
 }
